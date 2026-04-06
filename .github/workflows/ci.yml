@@ -11,6 +11,7 @@ on:
       - 'spring-boot-api/**'
       - 'python-ml-api/**'
       - '.github/workflows/**'
+  workflow_dispatch: # 수동으로 버튼을 눌러서 실행할 수 있게 해주는 옵션 추가
 
 jobs:
   build-and-push:
