@@ -58,3 +58,17 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:${{ github.sha }}
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/spring-boot-api:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/spring-boot-api:buildcache,mode=max
+
+      # 6. Python ML API 로컬 배포 (CD)
+      - name: Deploy Python ML API
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/python-ml-api:latest
+          docker rm -f python-ml-api || true
+          docker run -d -p 8000:8000 --name python-ml-api ${{ secrets.DOCKER_USERNAME }}/python-ml-api:latest
+
+      # 7. Spring Boot 메인 API 로컬 배포 (CD)
+      - name: Deploy Spring Boot API
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:latest
+          docker rm -f spring-boot-api || true
+          docker run -d -p 8080:8080 --name spring-boot-api ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:latest
