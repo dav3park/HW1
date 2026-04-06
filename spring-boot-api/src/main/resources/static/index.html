@@ -3,314 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Vision | Face Recognition</title>
-    <!-- 구글 프리미엄 폰트 (Inter) 적용 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>NEXUS - Neural Face Architecture</title>
+    <!-- 공상과학/사이버펑크 무드를 위한 모노스페이스 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        /* 기본 리셋 및 전역 스타일 */
+        :root {
+            --bg-color: #050505;
+            --grid-color: rgba(0, 255, 204, 0.05);
+            --primary-cyan: #00ffcc;
+            --primary-pink: #ff00ff;
+            --text-color: #e0e0e0;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: #f8fafc;
+            font-family: 'Share Tech Mono', monospace;
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-color);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header */
+        header {
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,255,204,0.05), transparent);
+        }
+        .logo { font-size: 1.5rem; color: var(--primary-cyan); letter-spacing: 4px; text-shadow: 0 0 10px var(--primary-cyan); }
+        .status { font-size: 0.9rem; color: #666; display: flex; align-items: center; gap: 8px; }
+        .blink { width: 10px; height: 10px; background: var(--primary-cyan); border-radius: 50%; box-shadow: 0 0 10px var(--primary-cyan); animation: blinker 1s linear infinite; }
+
+        /* Main Layout */
+        .dashboard {
+            display: flex;
+            flex: 1;
+            padding: 40px;
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Left: Target Upload / Scan Area */
+        .target-module {
+            flex: 1;
+            border: 1px solid var(--primary-cyan);
+            border-radius: 8px;
+            position: relative;
+            background: rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0,255,204,0.1);
         }
 
-        /* 메인 컨테이너 (글래스모피즘 효과) */
-        .container {
-            width: 100%;
-            max-width: 550px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-            text-align: center;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        .target-module::before, .target-module::after {
+            content: ''; position: absolute; width: 20px; height: 20px; border-style: solid; border-color: var(--primary-cyan);
         }
-        
-        .container:hover {
-            transform: translateY(-5px);
-        }
+        .target-module::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+        .target-module::after { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
 
-        /* 메인 타이틀 (그라데이션 텍스트) */
-        h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(to right, #38bdf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
-
-        p.subtitle {
-            color: #94a3b8;
-            font-size: 0.95rem;
-            margin-bottom: 35px;
-            font-weight: 300;
-        }
-
-        /* 파일 업로드 영역 */
-        .upload-area {
-            border: 2px dashed rgba(192, 132, 252, 0.4);
-            border-radius: 16px;
-            padding: 50px 20px;
-            cursor: pointer;
-            background: rgba(15, 23, 42, 0.3);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .upload-area:hover, .upload-area.dragover {
-            background: rgba(192, 132, 252, 0.1);
-            border-color: #c084fc;
-            transform: scale(1.02);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            text-shadow: 0 5px 15px rgba(192,132,252,0.4);
-            animation: bounce 2s infinite ease-in-out;
-        }
-
-        .upload-text {
-            color: #cbd5e1;
-            font-weight: 400;
-        }
-
-        .upload-area input[type="file"] {
+        .upload-layer {
             position: absolute;
-            left: 0; top: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer;
+            z-index: 10;
+            text-align: center;
+            cursor: pointer;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: background 0.3s;
         }
+        .upload-layer:hover { background: rgba(0, 255, 204, 0.1); }
+        .upload-layer input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        h2.prompt { color: var(--primary-cyan); letter-spacing: 2px; text-transform: uppercase; font-size: 1.2rem; margin-bottom: 10px;}
+        .sub-prompt { color: #888; font-size: 0.8rem; }
 
-        /* 사진 미리보기 */
-        #preview {
-            max-width: 100%;
-            max-height: 250px;
-            border-radius: 12px;
-            margin-top: 20px;
+        #targetImage { width: 100%; height: 100%; object-fit: contain; display: none; z-index: 1; opacity: 0.7; filter: grayscale(20%) contrast(1.2); }
+
+        /* The Scanner Laser */
+        .scanner-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--primary-cyan);
+            box-shadow: 0 0 15px 5px rgba(0, 255, 204, 0.6);
+            z-index: 5;
             display: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            object-fit: cover;
+            animation: scan 2s ease-in-out infinite alternate;
         }
 
-        /* 종합 분석 결과 출력 영역 (Grid 레이아웃 적용) */
-        .result-card {
-            margin-top: 30px;
-            padding: 25px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
-            border: 1px solid rgba(255,255,255,0.1);
-            display: none;
-            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .result-title { 
-            font-size: 0.9rem; 
-            color: #e2e8f0; 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            font-weight: 700;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .flex-results {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-            text-align: left;
-        }
-        
-        .result-section {
+        /* Right: Analysis Data */
+        .data-module {
             flex: 1;
-            background: rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .data-panel {
+            flex: 1;
+            border: 1px solid rgba(255, 0, 255, 0.5);
+            border-radius: 8px;
+            background: rgba(20, 0, 20, 0.4);
+            padding: 30px;
+            box-shadow: inset 0 0 20px rgba(255,0,255,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header { font-size: 1rem; color: var(--primary-pink); border-bottom: 1px dashed var(--primary-pink); padding-bottom: 10px; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }
+
+        .metric-group { margin-bottom: 30px; display: none; }
+        .metric-label { font-size: 0.8rem; color: #888; margin-bottom: 5px; text-transform: uppercase;}
+        .metric-value { font-size: 2rem; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); margin-bottom: 15px; letter-spacing: 1px; }
+
+        .hud-bar-container { width: 100%; height: 4px; background: #222; position: relative; }
+        .hud-bar-fill { height: 100%; width: 0%; background: var(--primary-cyan); box-shadow: 0 0 10px var(--primary-cyan); transition: width 1.5s cubic-bezier(0.1, 0.9, 0.2, 1); }
+        .hud-bar-text { position: absolute; right: 0; top: -20px; font-size: 0.8rem; color: var(--primary-cyan); }
+
+        .terminal-log {
+            height: 150px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.8);
             padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+            color: #0f0;
+            overflow-y: auto;
+            border-radius: 4px;
         }
+        .log-entry { margin-bottom: 5px; opacity: 0.8; }
+        .log-error { color: #f00; }
 
-        .section-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
-        .result-value { font-size: 1.6rem; font-weight: 700; margin: 10px 0; color: #ffffff; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        @keyframes blinker { 50% { opacity: 0; } }
         
-        .confidence-bar { 
-            width: 100%; 
-            height: 8px; 
-            background: rgba(0,0,0,0.3); 
-            border-radius: 4px; 
-            overflow: hidden; 
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-            margin-top: auto;
+        .glitch-effect { animation: glitch 0.2s linear infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 1px) }
+            40% { transform: translate(-1px, -1px) }
+            60% { transform: translate(2px, 1px) }
+            80% { transform: translate(1px, -1px) }
+            100% { transform: translate(0) }
         }
-        
-        .confidence-fill { 
-            height: 100%; 
-            border-radius: 4px; 
-            width: 0%; 
-            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
-        }
-
-        /* 성별, 인종별 테마 컬러 분리 */
-        #genderFill { background: linear-gradient(90deg, #38bdf8, #818cf8); box-shadow: 0 0 10px rgba(56,189,248,0.5); }
-        #raceFill { background: linear-gradient(90deg, #f59e0b, #ef4444); box-shadow: 0 0 10px rgba(245,158,11,0.5); }
-        
-        .confidence-text { 
-            font-size: 0.8rem; 
-            color: #cbd5e1; 
-            margin-top: 8px; 
-            display: flex; 
-            justify-content: space-between;
-        }
-
-        /* 로딩 스피너 애니메이션 */
-        .loader {
-            display: none;
-            margin: 40px auto;
-            width: 50px; height: 50px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: #c084fc;
-            border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
-        }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>AI Vision Pro</h1>
-    <p class="subtitle">얼굴이 포함된 사진을 올리면 1초 만에 성별과 인종을 판별합니다.</p>
+<header>
+    <div class="logo">NEXUS_VISION // V.2.0</div>
+    <div class="status">
+        <div class="blink"></div>
+        <span>SYSTEM ONLINE : AWAITING TARGET INPUT</span>
+    </div>
+</header>
 
-    <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📸</div>
-        <h3 class="upload-text">사진을 드래그하거나 클릭하세요</h3>
-        <input type="file" id="fileInput" accept="image/jpeg, image/png">
+<div class="dashboard">
+    <!-- TARGET UPLOAD -->
+    <div class="target-module" id="targetModule">
+        <div class="upload-layer" id="uploadLayer">
+            <h2 class="prompt">[ ACQUIRE TARGET ]</h2>
+            <div class="sub-prompt">Click or drag image pattern to initialize link</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <img id="targetImage" src="" alt="Target">
+        <div class="scanner-line" id="scannerLine"></div>
     </div>
 
-    <img id="preview" alt="Uploaded Face">
-    <div class="loader" id="loader"></div>
-
-    <div class="result-card" id="resultCard">
-        <div class="result-title">🔮 종합 얼굴 분석 결과</div>
-        
-        <div class="flex-results">
-            <!-- 성별 섹션 -->
-            <div class="result-section">
-                <div class="section-label">성별 (GENDER)</div>
-                <div class="result-value" id="genderResult">Woman</div>
-                <div class="confidence-bar">
-                    <div class="confidence-fill" id="genderFill"></div>
-                </div>
-                <div class="confidence-text"><span id="genderText">0% 확신</span></div>
-            </div>
+    <!-- ANALYSIS DATA -->
+    <div class="data-module">
+        <!-- Main Analysis Panel -->
+        <div class="data-panel">
+            <div class="panel-header">Neural Subject Analysis</div>
             
-            <!-- 인종 섹션 추가됨 -->
-            <div class="result-section">
-                <div class="section-label">인종 (ETHNICITY)</div>
-                <div class="result-value" id="raceResult">Asian</div>
-                <div class="confidence-bar">
-                    <div class="confidence-fill" id="raceFill"></div>
+            <!-- Gender Metric -->
+            <div class="metric-group" id="genderGroup">
+                <div class="metric-label">Identified Gender Class</div>
+                <div class="metric-value" id="genderValue">--</div>
+                <div class="hud-bar-container">
+                    <div class="hud-bar-text" id="genderConfText">0.0%</div>
+                    <div class="hud-bar-fill" id="genderBar"></div>
                 </div>
-                <div class="confidence-text"><span id="raceText">0% 확신</span></div>
             </div>
+
+            <!-- Race Metric -->
+            <div class="metric-group" id="raceGroup">
+                <div class="metric-label">Identified Ethnographic Origin</div>
+                <div class="metric-value" id="raceValue">--</div>
+                <div class="hud-bar-container">
+                    <div class="hud-bar-text" id="raceConfText" style="color: var(--primary-pink)">0.0%</div>
+                    <div class="hud-bar-fill" id="raceBar" style="background: var(--primary-pink); box-shadow: 0 0 10px var(--primary-pink);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Logs -->
+        <div class="terminal-log" id="terminalLog">
+            <div class="log-entry">> System initialized. Waiting for external image payload.</div>
         </div>
     </div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
-    const preview = document.getElementById('preview');
-    const uploadArea = document.getElementById('uploadArea');
-    const loader = document.getElementById('loader');
-    const resultCard = document.getElementById('resultCard');
+    const targetImage = document.getElementById('targetImage');
+    const uploadLayer = document.getElementById('uploadLayer');
+    const scannerLine = document.getElementById('scannerLine');
+    const terminalLog = document.getElementById('terminalLog');
+    
+    // Result elements
+    const genderGroup = document.getElementById('genderGroup');
+    const genderValue = document.getElementById('genderValue');
+    const genderBar = document.getElementById('genderBar');
+    const genderConfText = document.getElementById('genderConfText');
 
-    fileInput.addEventListener('change', handleFile);
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-    uploadArea.addEventListener('drop', (e) => { 
-        e.preventDefault(); 
-        uploadArea.classList.remove('dragover'); 
-        if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files; 
-            handleFile(); 
-        }
-    });
+    const raceGroup = document.getElementById('raceGroup');
+    const raceValue = document.getElementById('raceValue');
+    const raceBar = document.getElementById('raceBar');
+    const raceConfText = document.getElementById('raceConfText');
 
-    async function handleFile() {
+    function logTerminal(msg, isError = false) {
+        const div = document.createElement('div');
+        div.className = isError ? 'log-entry log-error' : 'log-entry';
+        div.innerText = `> [${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
+        terminalLog.appendChild(div);
+        terminalLog.scrollTop = terminalLog.scrollHeight;
+    }
+
+    fileInput.addEventListener('change', handleUpload);
+
+    async function handleUpload() {
         if (!fileInput.files.length) return;
         const file = fileInput.files[0];
 
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-        uploadArea.style.display = 'none';
-        resultCard.style.display = 'none';
+        // Reset UI
+        logTerminal(`Target acquired: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+        targetImage.src = URL.createObjectURL(file);
+        targetImage.style.display = 'block';
         
-        document.getElementById('genderFill').style.width = '0%';
-        document.getElementById('raceFill').style.width = '0%';
-        loader.style.display = 'block';
+        uploadLayer.style.display = 'none';
+        scannerLine.style.display = 'block';
+        
+        genderGroup.style.display = 'none';
+        raceGroup.style.display = 'none';
+        genderBar.style.width = '0%';
+        raceBar.style.width = '0%';
+        targetImage.classList.add('glitch-effect');
+
+        logTerminal("Initiating Neural Link to ML Backend (Port 8000)...");
+        logTerminal("Running DeepFace Deep Learning inference algorithms...");
 
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            const response = await fetch('http://localhost:8000/analyze', {
-                method: 'POST',
-                body: formData
-            });
-
+            const response = await fetch('http://localhost:8000/analyze', { method: 'POST', body: formData });
             const data = await response.json();
-            loader.style.display = 'none';
+            
+            scannerLine.style.display = 'none';
+            targetImage.classList.remove('glitch-effect');
             
             if (!response.ok) {
-                uploadArea.style.display = 'block';
-                preview.style.display = 'none';
-                alert(data.detail || "이미지 분석 중 에러가 발생했습니다.");
+                logTerminal(`ML Backend Error: ${data.detail || 'Unknown anomaly'}`, true);
+                uploadLayer.style.display = 'flex';
+                targetImage.style.display = 'none';
                 return;
             }
 
-            resultCard.style.display = 'block';
+            logTerminal("Analysis Complete. Parsing response payload...");
 
-            // 1. 성별 반영 로직
-            document.getElementById('genderResult').innerHTML = data.dominant_gender === 'Man' ? '👨 <b>남성</b>' : '👩 <b>여성</b>';
+            // Output Results
+            genderGroup.style.display = 'block';
+            raceGroup.style.display = 'block';
+
+            // Gender Handling
+            genderValue.innerText = data.dominant_gender.toUpperCase();
             const confGender = data.dominant_gender === 'Man' ? data.gender_confidence.Man : data.gender_confidence.Woman;
             
-            // 2. 인종(Race) 반영 파싱 로직 (업데이트)
-            const raceMap = {
-                'asian': '🌏 아시안', 'indian': '🌏 인도계', 'black': '🌍 흑인', 
-                'white': '🌍 백인', 'middle eastern': '🧕 중동계', 'latino hispanic': '💃 라티노'
-            };
-            const mappedRace = raceMap[data.dominant_race.toLowerCase()] || data.dominant_race;
-            document.getElementById('raceResult').innerHTML = `<b>${mappedRace}</b>`;
+            // Race Handling
+            raceValue.innerText = data.dominant_race.toUpperCase();
             const confRace = data.race_confidence[data.dominant_race];
             
-            // 게이지 바 애니메이션
+            // Render Animations
             setTimeout(() => {
-                document.getElementById('genderFill').style.width = `${confGender.toFixed(1)}%`;
-                document.getElementById('raceFill').style.width = `${confRace.toFixed(1)}%`;
+                genderBar.style.width = `${confGender.toFixed(1)}%`;
+                raceBar.style.width = `${confRace.toFixed(1)}%`;
             }, 100);
             
-            document.getElementById('genderText').textContent = `${confGender.toFixed(1)}% 확신`;
-            document.getElementById('raceText').textContent = `${Math.min(100, confRace).toFixed(1)}% 확신`;
+            genderConfText.innerText = `${confGender.toFixed(2)}%`;
+            raceConfText.innerText = `${Math.min(100, confRace).toFixed(2)}%`;
+            
+            logTerminal(`Classification Output --> [Gender: ${data.dominant_gender}] [Race: ${data.dominant_race}]`);
 
         } catch (err) {
-            loader.style.display = 'none';
-            uploadArea.style.display = 'block';
-            preview.style.display = 'none';
-            alert("서버 연결 실패. Python API 서버가 8000 포트에서 실행 중인지 확인하세요.");
+            scannerLine.style.display = 'none';
+            targetImage.classList.remove('glitch-effect');
+            uploadLayer.style.display = 'flex';
+            targetImage.style.display = 'none';
+            logTerminal("CRITICAL FAILURE: Cannot establish connection to ML Server on localhost:8000", true);
         }
     }
+
+    // Drag events for target module
+    const targetModule = document.getElementById('targetModule');
+    targetModule.addEventListener('dragover', (e) => { e.preventDefault(); targetModule.style.borderColor = "#ff00ff"; });
+    targetModule.addEventListener('dragleave', () => { targetModule.style.borderColor = "#00ffcc"; });
+    targetModule.addEventListener('drop', (e) => { 
+        e.preventDefault(); 
+        targetModule.style.borderColor = "#00ffcc";
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files; 
+            handleUpload(); 
+        }
+    });
+
 </script>
 
 </body>
