@@ -43,8 +43,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/python-ml-api:latest
             ${{ secrets.DOCKER_USERNAME }}/python-ml-api:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/python-ml-api:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/python-ml-api:buildcache,mode=max
 
       # 5. Spring Boot 메인 API 이미지 빌드 및 Push
       - name: Build and Push Spring Boot API Image
@@ -56,8 +54,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:latest
             ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/spring-boot-api:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/spring-boot-api:buildcache,mode=max
 
       # 6. Python ML API 로컬 배포 (CD)
       - name: Deploy Python ML API
