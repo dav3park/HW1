@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=builder /build/build/libs/*.jar app.jar
 
 # 보안을 위한 일반 유저 생성 및 권한 설정
-RUN adduser -D appuser \
+RUN useradd -m appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
