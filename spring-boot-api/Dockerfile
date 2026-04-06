@@ -1,16 +1,14 @@
 # [Stage 1] 빌드 환경 (JDK 포함)
-FROM eclipse-temurin:17-jdk-alpine AS builder
+FROM gradle:8-jdk17-alpine AS builder
 WORKDIR /build
 
 # 빌드 캐시를 위해 의존성 관련 파일만 다운로드 (소스코드 복사 전 수행)
-COPY gradlew .
-COPY gradle gradle
 COPY build.gradle settings.gradle ./
-RUN ./gradlew dependencies --no-daemon
+RUN gradle dependencies --no-daemon || true
 
 # 소스코드 복사 후 jar 호를 빌드
 COPY src src
-RUN ./gradlew bootJar --no-daemon
+RUN gradle bootJar --no-daemon
 
 # [Stage 2] 실행 환경 (JRE만 포함되어 매우 가벼움)
 FROM eclipse-temurin:17-jre-alpine
