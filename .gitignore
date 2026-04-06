@@ -1,0 +1,21 @@
+# GitHub Actions Runner
+actions-runner/
+
+# Java / Spring Boot / Gradle
+.gradle/
+spring-boot-api/build/
+spring-boot-api/out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# IntelliJ / IDE / OS
+.idea/
+*.iml
+*.iws
+.DS_Store
