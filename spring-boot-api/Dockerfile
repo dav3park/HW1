@@ -1,5 +1,5 @@
 # [Stage 1] 빌드 환경 (JDK 포함)
-FROM gradle:8-jdk17-alpine AS builder
+FROM gradle:8-jdk17 AS builder
 WORKDIR /build
 
 # 빌드 캐시를 위해 의존성 관련 파일만 다운로드 (소스코드 복사 전 수행)
