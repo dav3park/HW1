@@ -1,0 +1,59 @@
+name: CI & Docker Push Pipeline
+
+# main(또는 master) 브랜치에 코드가 push 될 때 파이프라인 트리거
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      # 각 폴더 내의 코드가 수정되었을 때만 트리거 (효율성)
+      - 'spring-boot-api/**'
+      - 'python-ml-api/**'
+      - '.github/workflows/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 깃허브 코드 체크아웃
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Docker 빌드 캐시 및 멀티플랫폼 지원을 위한 Buildx 셋업
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Github Secrets를 활용해 Docker Hub 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. Python ML API 이미지 빌드 및 Push
+      - name: Build and Push Python ML API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./python-ml-api
+          file: ./python-ml-api/Dockerfile
+          push: true  # Docker Hub로 Push 활성화
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/python-ml-api:latest
+            ${{ secrets.DOCKER_USERNAME }}/python-ml-api:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/python-ml-api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/python-ml-api:buildcache,mode=max
+
+      # 5. Spring Boot 메인 API 이미지 빌드 및 Push
+      - name: Build and Push Spring Boot API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./spring-boot-api
+          file: ./spring-boot-api/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:latest
+            ${{ secrets.DOCKER_USERNAME }}/spring-boot-api:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/spring-boot-api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/spring-boot-api:buildcache,mode=max
