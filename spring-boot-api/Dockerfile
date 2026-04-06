@@ -10,8 +10,8 @@ RUN gradle dependencies --no-daemon || true
 COPY src src
 RUN gradle bootJar --no-daemon
 
-# [Stage 2] 실행 환경 (JRE만 포함되어 매우 가벼움)
-FROM eclipse-temurin:17-jre-alpine
+# [Stage 2] 실행 환경 (JRE만 포함)
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 # builder 스테이지에서 빌드된 최종 jar 파일만 복사
