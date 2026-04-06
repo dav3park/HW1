@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Vision | Face Recognition</title>
+    <!-- 구글 프리미엄 폰트 (Inter) 적용 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 리셋 및 전역 스타일 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 메인 컨테이너 (글래스모피즘 효과) */
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            text-align: center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 메인 타이틀 (그라데이션 텍스트) */
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #38bdf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 35px;
+            font-weight: 300;
+        }
+
+        /* 파일 업로드 영역 */
+        .upload-area {
+            border: 2px dashed rgba(192, 132, 252, 0.4);
+            border-radius: 16px;
+            padding: 50px 20px;
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            background: rgba(192, 132, 252, 0.1);
+            border-color: #c084fc;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 5px 15px rgba(192,132,252,0.4);
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        .upload-text {
+            color: #cbd5e1;
+            font-weight: 400;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+
+        /* 사진 미리보기 */
+        #preview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            object-fit: cover;
+        }
+
+        /* 분석 결과 출력 영역 */
+        .result-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.1);
+            display: none;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .result-title { 
+            font-size: 0.85rem; 
+            color: #94a3b8; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            font-weight: 600;
+        }
+        
+        .result-value { 
+            font-size: 2.8rem; 
+            font-weight: 700; 
+            margin: 15px 0; 
+            color: #ffffff; 
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .confidence-bar { 
+            width: 100%; 
+            height: 10px; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 5px; 
+            overflow: hidden; 
+            margin-top: 20px; 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        .confidence-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #38bdf8, #c084fc); 
+            border-radius: 5px; 
+            width: 0%; 
+            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
+            box-shadow: 0 0 10px rgba(192,132,252,0.5);
+        }
+        
+        .confidence-text { 
+            font-size: 0.85rem; 
+            color: #cbd5e1; 
+            margin-top: 10px; 
+            display: flex; 
+            justify-content: space-between;
+        }
+
+        /* 로딩 스피너 애니메이션 */
+        .loader {
+            display: none;
+            margin: 40px auto;
+            width: 50px; height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #c084fc;
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI Vision</h1>
+    <p class="subtitle">얼굴이 포함된 사진을 올리면 1초 만에 성별을 판별합니다.</p>
+
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📸</div>
+        <h3 class="upload-text">사진을 드래그하거나 클릭하세요</h3>
+        <input type="file" id="fileInput" accept="image/jpeg, image/png">
+    </div>
+
+    <img id="preview" alt="Uploaded Face">
+    <div class="loader" id="loader"></div>
+
+    <div class="result-card" id="resultCard">
+        <div class="result-title">🔮 분석 결과</div>
+        <div class="result-value" id="genderResult">Woman</div>
+        <div class="confidence-bar">
+            <div class="confidence-fill" id="confidenceFill"></div>
+        </div>
+        <div class="confidence-text">
+            <span>AI 확신도 (Confidence)</span>
+            <span id="confidenceText">0%</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const uploadArea = document.getElementById('uploadArea');
+    const loader = document.getElementById('loader');
+    const resultCard = document.getElementById('resultCard');
+    const genderResult = document.getElementById('genderResult');
+    const confidenceFill = document.getElementById('confidenceFill');
+    const confidenceText = document.getElementById('confidenceText');
+
+    /* 파일 업로드 이벤트 핸들러 */
+    fileInput.addEventListener('change', handleFile);
+    
+    /* 드래그 앤 드롭 효과 지원 */
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => { 
+        e.preventDefault(); 
+        uploadArea.classList.remove('dragover'); 
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files; 
+            handleFile(); 
+        }
+    });
+
+    async function handleFile() {
+        if (!fileInput.files.length) return;
+        const file = fileInput.files[0];
+
+        // 기존 결과 초기화 및 로딩 UI 표시
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        uploadArea.style.display = 'none';
+        resultCard.style.display = 'none';
+        confidenceFill.style.width = '0%';
+        loader.style.display = 'block';
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            // Python FastAPI 서버로 사진 전송 (AJAX 통신)
+            const response = await fetch('http://localhost:8000/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            // 전송 완료 시 로딩 중단
+            loader.style.display = 'none';
+            
+            // 서버 에러 처리
+            if (!response.ok) {
+                uploadArea.style.display = 'block';
+                preview.style.display = 'none';
+                alert(data.detail || "이미지 분석 중 에러가 발생했습니다.");
+                return;
+            }
+
+            // 분석 완료 화면 (멋진 마이크로 애니메이션)
+            resultCard.style.display = 'block';
+            genderResult.innerHTML = data.dominant_gender === 'Man' ? '👨 성별: <b>남성</b>' : '👩 성별: <b>여성</b>';
+            
+            const confPattern = data.dominant_gender === 'Man' ? data.confidence.Man : data.confidence.Woman;
+            const confValue = confPattern.toFixed(1);
+            
+            // 확률(확신도) 게이지 바 애니메이션 트리거
+            setTimeout(() => {
+                confidenceFill.style.width = `${confValue}%`;
+            }, 100);
+            
+            confidenceText.textContent = `${confValue}% 확신`;
+
+        } catch (err) {
+            loader.style.display = 'none';
+            uploadArea.style.display = 'block';
+            preview.style.display = 'none';
+            alert("서버 연결 실패. Python API 서버가 8000 포트에서 실행 중인지 확인하세요.");
+        }
+    }
+</script>
+
+</body>
+</html>

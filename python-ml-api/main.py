@@ -1,9 +1,19 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from deepface import DeepFace
 import cv2
 import numpy as np
 
 app = FastAPI(title="Face Recognition ML API")
+
+# 웹 브라우저에서 보낸 요청(업로드)을 서버가 안전하게 허락해주기 위한 CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 개발용이므로 모든 도메인 접속 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root(): 
